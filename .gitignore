@@ -1,0 +1,10 @@
+#Python compile file
+*.pyc
+
+#Jupyter notebook
+*.ipynb
+.ipynb_checkpoints
+
+#Tensorflow model
+CharadesWebcam/*.pb
+
