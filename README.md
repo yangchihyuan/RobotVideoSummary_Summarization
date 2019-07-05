@@ -12,6 +12,7 @@ git clone https://github.com/yangchihyuan/RobotVideoSummary_Summarization.git
 ```
 - download a zip file containing example frames and a Tensorflow frozen model
 ```
+cd RobotVideoSummary_Summarization
 ./download_files.sh
 ```
 - run demo.py

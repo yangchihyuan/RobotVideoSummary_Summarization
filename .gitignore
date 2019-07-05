@@ -8,3 +8,5 @@
 #Tensorflow model
 CharadesWebcam/*.pb
 
+#frames
+frames
