@@ -8,6 +8,7 @@
 
 # Prerequisite #
 - OpenPose's Python API and BODY_COCO model
+
 check the BUILD_PYTHON and DOWNLOAD_BODY_COCO_MODEL in OpenPose's cmake-gui configuration window.
 
 # Installation #
