@@ -10,3 +10,6 @@ CharadesWebcam/*.pb
 
 #frames
 frames
+
+#VS code
+.vscode
