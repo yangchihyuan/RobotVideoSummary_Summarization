@@ -4,12 +4,20 @@
 - wget 1.17.1
 - unzip 6.0
 - Python 3.5
-- Tensorflow 1.13.0
 
 # Prerequisite #
 - OpenPose's Python API and BODY_COCO model
 
 check the BUILD_PYTHON and DOWNLOAD_BODY_COCO_MODEL in OpenPose's cmake-gui configuration window.
+
+# Required Python packages #
+- h5py 2.9.0
+- Tensorflow 1.13.0
+- sklearnl
+- simplejason 3.16.0
+- matplotlib
+- python3-tk
+
 
 # Installation #
 - clone this repository to your computer
