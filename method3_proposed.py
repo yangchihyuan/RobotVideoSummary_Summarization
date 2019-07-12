@@ -15,35 +15,28 @@ import time
 import datetime
 import argparse
 
-from utility.str2bool import str2bool
-
 # Flags
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_name", default="20190503")
 parser.add_argument("--image_path", default="/home/yangchihyuan/RobotVideoSummary_Summarization/frames", help="image path")
 parser.add_argument("--feature_path", default="/home/yangchihyuan/RobotVideoSummary_Summarization/features", help="image path")
-parser.add_argument("--filelist", default="/home/yangchihyuan/RobotVideoSummary_Summarization/filelist.txt", required=False)
-parser.add_argument("--usefilelist", default=False, type=str2bool, required=False, help="if False, all files in the image_path will be used. Otherwise, only files in filelist will be used.")
 parser.add_argument("--number_of_clusters", default=8)
 parser.add_argument("--copy_to_directory", default="/home/yangchihyuan/RobotVideoSummary_Summarization/keyframes")
 
 args = parser.parse_args()
-
-
-# args_dataset="/4t/yangchihyuan/TransmittedImages/datasets/"+args_data_name+"_effective_Charade.h5"
-# args_image_directory="/4t/yangchihyuan/TransmittedImages/"+args_data_name
 
 copy_to_directory = os.path.join(os.path.join(args.copy_to_directory,args.data_name), "method3_time_action")
 if not os.path.exists(copy_to_directory):
     os.makedirs(copy_to_directory)
 save_clusters_file=os.path.join(copy_to_directory,"clusters.json")
 
-feature_filename = os.path.join(os.path.join(args.feature_path,args.data_name),"Charades_probability.h5")
+feature_filename = os.path.join(args.feature_path,args.data_name+".h5")
 image_directory = os.path.join(os.path.join(os.path.join(args.image_path, args.data_name+"_classified"),"wellposed"),"original")
 
 dataset = h5py.File(feature_filename, 'r')
-feature_matrix = dataset[args.data_name]['features'][...]
-file_list = dataset[args.data_name]['file_list'][...]
+feature_matrix = dataset['features']['charades_probability'][...]
+bytes_list = dataset['file_list'][...]
+file_list = [n.decode("utf-8") for n in bytes_list]
 number_of_images = int(feature_matrix.shape[0])
 feature_dimension = int(feature_matrix.shape[1])
 print('number_of_images', number_of_images)
@@ -58,7 +51,7 @@ for filename in file_list:
 duration = timestamps[-1] - timestamps[0]
 
 start_time = time.time()
-time_gap_threshold = 60000  #1 minute
+time_gap_threshold = 1000  #1 second
 
 def calculate_number_of_cluster(time_gap_threshold):
     print('time_gap_threshold',time_gap_threshold)
@@ -117,7 +110,7 @@ averaged_feature_list = []
 #     #remove old files
 #     os.system("rm " + copy_to_directory +"/*")
 
-   
+keyframe_list = []
 for idx_cluster in order_by_size[0:8]:
     cluster = clusters[idx_cluster]
     number_of_images = len(cluster)
@@ -132,11 +125,12 @@ for idx_cluster in order_by_size[0:8]:
     index_global = cluster[index_representative]
     print('index_global', index_global)
     file_name = file_list[index_global]
+    keyframe_list.append(file_name)
     print('file_name', file_name)
     img=mpimg.imread(os.path.join(image_directory,file_name))
     plt.figure()
     imgplot = plt.imshow(img)
-    copyfile(os.path.join(image_directory,file_name), os.path.join(args.copy_to_directory,file_name))
+    copyfile(os.path.join(image_directory,file_name), os.path.join(copy_to_directory,file_name))
 
 elapsed = time.time() - start_time
 elapsed = str(datetime.timedelta(seconds=elapsed))
@@ -145,5 +139,7 @@ print("Finished. Total elapsed time (h:m:s): {}".format(elapsed))
     
     
 #save the segment result into a json file
+JsonDumpDict = {'keyframe_list':keyframe_list, 'clusters':clusters}
 with open(save_clusters_file, 'w') as outfile:
-    json.dump(clusters, outfile)
+    json.dump(JsonDumpDict, outfile)
+

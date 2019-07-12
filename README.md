@@ -4,6 +4,8 @@
 - wget 1.17.1
 - unzip 6.0
 - Python 3.5
+- python3-tk
+
 
 # Prerequisite #
 - OpenPose's Python API and BODY_COCO model
@@ -16,8 +18,8 @@ check the BUILD_PYTHON and DOWNLOAD_BODY_COCO_MODEL in OpenPose's cmake-gui conf
 - sklearnl
 - simplejason 3.16.0
 - matplotlib
-- python3-tk
-
+- Pillow 6.1.0
+- pytz-2019.1
 
 # Installation #
 - clone this repository to your computer

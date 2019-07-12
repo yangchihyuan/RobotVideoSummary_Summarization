@@ -1,5 +1,5 @@
 import numpy as np
-from util import esym_poly
+from dpp.util import esym_poly
 
 def k_sample(k, lam, V_full):
   np.random.seed(0)  #assign a random seed

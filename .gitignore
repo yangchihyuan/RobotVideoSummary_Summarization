@@ -8,8 +8,11 @@
 #Tensorflow model
 CharadesWebcam/*.pb
 
-#frames
+#frames and generated data
 frames
+keyframes
+charts
+features
 
 #VS code
 .vscode

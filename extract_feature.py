@@ -21,27 +21,6 @@ parser.add_argument("--usefilelist", default=False, type=str2bool, required=Fals
 parser.add_argument("--model", default="/home/yangchihyuan/RobotVideoSummary_Summarization/CharadesWebcam/frozen_model.pb")
 args = parser.parse_args()
 
-# args_data_name="0419_lab"
-# args_dataset="/4t/yangchihyuan/TransmittedImages/datasets/"+args_data_name+"_effective_Charade.h5"
-# args_image_directory="/4t/yangchihyuan/TransmittedImages/"+args_data_name
-# args_listfile="/4t/yangchihyuan/TransmittedImages/filelist/"+args_data_name+"_effective.txt"
-# args_model="/4t/yangchihyuan/TransmittedImages/CharadesWebcam/frozen_model.pb"
-# args_labels="/4t/yangchihyuan/TransmittedImages/CharadesWebcam/labels.txt"
-
-
-# def loadlabels():
-#     # List of the strings that is used to add correct label for each box.
-#     labels = {}
-#     with open(args_labels) as f:
-#         for line in f:
-#             x = line.split(' ')
-#             cls, rest = x[0], ' '.join(x[1:]).strip()
-#             clsint = int(cls[1:])
-#             labels[clsint] = {'id': clsint, 'name': rest}
-#     return labels
-# category_index = loadlabels()
-
-
 def prepare_im(image_np):
     # Normalize image and fix dimensions
     image_np = cv2.resize(image_np, dsize=(224,224)).astype(np.float32)/255.0
@@ -68,12 +47,6 @@ def recognize_activity(image_np, sess, detection_graph):
     classes = classes / np.sum(classes)    #classes means the probability
     return classes
 
-# print('enter main')
-# with open(args_listfile ,'r') as f:
-#     file_list = f.readlines()
-# file_list = [x.strip() for x in file_list] #remove \n
-# number_of_image = len(file_list)
-
 #load tensorflow
 detection_graph = tf.Graph()
 with detection_graph.as_default():
@@ -88,30 +61,43 @@ with detection_graph.as_default():
 #generate file list
 image_directory = os.path.join(os.path.join(os.path.join(args.image_path, args.data_name+"_classified"),"wellposed"),"original")
 list_basename = [f for f in os.listdir(image_directory) if os.path.isfile(os.path.join(image_directory, f))]
-number_of_image = len(list_basename)
+list_basename.sort()
+number_of_images = len(list_basename)
 
-feature_matrix = np.empty((number_of_image, 157), dtype=np.float32)
+#extract feature
+feature_charades_probability = np.empty((number_of_images, 157), dtype=np.float32)
+feature_HSV = np.empty([number_of_images, 4096],dtype=np.float64)
 idx = 0
 file_list_used = []
 for file_name in list_basename:
     print(args.data_name,idx,file_name)
     input_img = cv2.imread(os.path.join(image_directory, file_name))
+    #extract charades_probability
     probability_array = recognize_activity(input_img, sess, detection_graph)
-    feature_matrix[idx,:] = probability_array
+    feature_charades_probability[idx,:] = probability_array
+
+    #extract HSV
+    height = input_img.shape[0]
+    width = input_img.shape[1]
+    hsv = cv2.cvtColor(input_img,cv2.COLOR_BGR2HSV)
+    number_of_bins = [16, 16, 16]
+    value_range = [0, 180, 0, 256, 0, 256]
+    hist = cv2.calcHist([hsv], [0, 1, 2], None, number_of_bins, value_range) #hist is a 16x16x16 array
+    feature_HSV[idx,:] = np.reshape(hist,(1,4096)) / (height*width)  #normalize the distribution
+
+
     idx = idx + 1
     file_list_used.append(file_name)
-
 sess.close()
 
-save_directory = os.path.join(args.feature_path,args.data_name)
-if not os.path.exists(save_directory):
-    os.makedirs(save_directory)
-feature_filename = os.path.join(save_directory,"Charades_probability.h5")
+
+feature_filename = os.path.join(args.feature_path,args.data_name+".h5")
 f = h5py.File(feature_filename, 'w')
-f.create_dataset(args.data_name + '/features', data=feature_matrix)
-f.create_dataset(args.data_name + '/n_frames', data=idx)
-f.create_dataset(args.data_name + '/data_name', data=args.data_name)
+f.create_dataset('features/charades_probability', data=feature_charades_probability)
+f.create_dataset('features/HSV_histogram', data=feature_HSV)
+f.create_dataset('n_frames', data=idx)
+f.create_dataset('data_name', data=args.data_name)
 #convert Unicode to ascii code
 asciiList = [n.encode("ascii", "ignore") for n in file_list_used]
-f.create_dataset(args.data_name + '/file_list', data=asciiList)
+f.create_dataset('file_list', data=asciiList)
 f.close()
