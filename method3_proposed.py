@@ -17,18 +17,18 @@ import argparse
 
 # Flags
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_name", default="20190503")
-parser.add_argument("--image_path", default="/home/yangchihyuan/RobotVideoSummary_Summarization/frames", help="image path")
-parser.add_argument("--feature_path", default="/home/yangchihyuan/RobotVideoSummary_Summarization/features", help="image path")
-parser.add_argument("--number_of_clusters", default=8)
-parser.add_argument("--copy_to_directory", default="/home/yangchihyuan/RobotVideoSummary_Summarization/keyframes")
+parser.add_argument("--data_name", required=True)
+parser.add_argument("--image_path", required=True, help="image path")
+parser.add_argument("--feature_path", required=True, help="image path")
+parser.add_argument("--number_of_keyframes", type=int, required=True)
+parser.add_argument("--keyframe_directory", required=True)
 
 args = parser.parse_args()
 
-copy_to_directory = os.path.join(os.path.join(args.copy_to_directory,args.data_name), "method3_time_action")
-if not os.path.exists(copy_to_directory):
-    os.makedirs(copy_to_directory)
-save_clusters_file=os.path.join(copy_to_directory,"clusters.json")
+keyframe_directory = os.path.join(os.path.join(args.keyframe_directory,args.data_name), "method3_time_action")
+if not os.path.exists(keyframe_directory):
+    os.makedirs(keyframe_directory)
+save_clusters_file=os.path.join(keyframe_directory,"clusters.json")
 
 feature_filename = os.path.join(args.feature_path,args.data_name+".h5")
 image_directory = os.path.join(os.path.join(os.path.join(args.image_path, args.data_name+"_classified"),"wellposed"),"original")
@@ -68,32 +68,32 @@ def calculate_number_of_cluster(time_gap_threshold):
             cluster = [idx]
     clusters.append(cluster)   #add the last cluster
 
-    number_of_clusters = len(clusters)
-    print('number of clusters',number_of_clusters)
-    return number_of_clusters, clusters
+    number_of_keyframes = len(clusters)
+    print('number of clusters',number_of_keyframes)
+    return number_of_keyframes, clusters
 
 #initial calculation
-number_of_clusters, clusters = calculate_number_of_cluster(time_gap_threshold)
-number_of_clusters_save = number_of_clusters
+number_of_keyframes, clusters = calculate_number_of_cluster(time_gap_threshold)
+number_of_keyframes_save = number_of_keyframes
 clusters_save = clusters
 #loop
 while True:
-    if number_of_clusters < args.number_of_clusters:
+    if number_of_keyframes < args.number_of_keyframes:
         time_gap_threshold = time_gap_threshold / 2
     else:
         time_gap_threshold = time_gap_threshold * 2
     
-    number_of_clusters, clusters = calculate_number_of_cluster(time_gap_threshold)
-    if number_of_clusters < 8:
+    number_of_keyframes, clusters = calculate_number_of_cluster(time_gap_threshold)
+    if number_of_keyframes < 8:
         break
     else:
         #update
         print('update')
-        number_of_clusters_save = number_of_clusters
+        number_of_keyframes_save = number_of_keyframes
         clusters_save = clusters
         
 #restore        
-number_of_clusters = number_of_clusters_save
+number_of_keyframes = number_of_keyframes_save
 clusters = clusters_save
         
 number_of_indices_list = [len(cluster) for cluster in clusters]
@@ -103,12 +103,12 @@ print('order_by_size', order_by_size)
 
 averaged_feature_list = []
 
-#check whether copy_to_directory exists
-# if( os.path.exists(copy_to_directory) == False):
-#     os.makedirs(copy_to_directory)
+#check whether keyframe_directory exists
+# if( os.path.exists(keyframe_directory) == False):
+#     os.makedirs(keyframe_directory)
 # else:
 #     #remove old files
-#     os.system("rm " + copy_to_directory +"/*")
+#     os.system("rm " + keyframe_directory +"/*")
 
 keyframe_list = []
 for idx_cluster in order_by_size[0:8]:
@@ -130,7 +130,7 @@ for idx_cluster in order_by_size[0:8]:
     img=mpimg.imread(os.path.join(image_directory,file_name))
     plt.figure()
     imgplot = plt.imshow(img)
-    copyfile(os.path.join(image_directory,file_name), os.path.join(copy_to_directory,file_name))
+    copyfile(os.path.join(image_directory,file_name), os.path.join(keyframe_directory,file_name))
 
 elapsed = time.time() - start_time
 elapsed = str(datetime.timedelta(seconds=elapsed))

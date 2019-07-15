@@ -14,20 +14,20 @@ import json
 
 # Flags
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_name", default="20190503")
-parser.add_argument("--image_path", default="/home/yangchihyuan/RobotVideoSummary_Summarization/frames", help="image path")
-parser.add_argument("--feature_path", default="/home/yangchihyuan/RobotVideoSummary_Summarization/features", help="image path")
-parser.add_argument("--number_of_clusters", default=8)
-parser.add_argument("--copy_to_directory", default="/home/yangchihyuan/RobotVideoSummary_Summarization/keyframes")
+parser.add_argument("--data_name", required=True)
+parser.add_argument("--image_path", required=True, help="image path")
+parser.add_argument("--feature_path", required=True, help="image path")
+parser.add_argument("--number_of_keyframes", type=int, required=True)
+parser.add_argument("--keyframe_directory", required=True)
 args = parser.parse_args()
 
 
-copy_to_directory = os.path.join(os.path.join(args.copy_to_directory,args.data_name), "method5_VSUMM")
-if not os.path.exists(copy_to_directory):
-    os.makedirs(copy_to_directory)
-save_result_file=os.path.join(copy_to_directory,"result.json")
-figure_name_eps=os.path.join(copy_to_directory,args.data_name+"_distance.eps")
-figure_name_png=os.path.join(copy_to_directory,args.data_name+"_distance.png")
+keyframe_directory = os.path.join(os.path.join(args.keyframe_directory,args.data_name), "method5_VSUMM")
+if not os.path.exists(keyframe_directory):
+    os.makedirs(keyframe_directory)
+save_result_file=os.path.join(keyframe_directory,"result.json")
+figure_name_eps=os.path.join(keyframe_directory,args.data_name+"_distance.eps")
+figure_name_png=os.path.join(keyframe_directory,args.data_name+"_distance.png")
 
 feature_filename = os.path.join(args.feature_path,args.data_name+".h5")
 image_directory = os.path.join(os.path.join(os.path.join(args.image_path, args.data_name+"_classified"),"wellposed"),"original")
@@ -39,12 +39,12 @@ file_list = [n.decode("utf-8") for n in bytes_list]
 number_of_images = feature_matrix.shape[0]
 print('number_of_images', number_of_images)
 
-#check whether copy_to_directory exists
-if( os.path.exists(copy_to_directory) == False):
-    os.mkdir(copy_to_directory)
+#check whether keyframe_directory exists
+if( os.path.exists(keyframe_directory) == False):
+    os.mkdir(keyframe_directory)
 else:
     #remove old files
-    os.system("rm " + copy_to_directory +"/*")
+    os.system("rm " + keyframe_directory +"/*")
 
 #compute the frame-wise distance
 distance_array = []
@@ -60,7 +60,7 @@ plt.xlabel('frame')
 plt.ylabel('distance')
 plt.savefig(figure_name_eps, dpi=72*10,bbox_inches='tight',transparent=True, pad_inches=0)
 plt.savefig(figure_name_png)
-#plt.show()
+plt.show()
 
 #distance_array.sort()
 #distance_array = distance_array[::-1]
@@ -72,13 +72,13 @@ start_time = time.time()
 
 #initialize the cluster centers
 cluster_initial = [math.floor(x) for x in np.linspace(0,16,number_of_images,endpoint=False)]
-initial_cluster_feature_matrix = np.empty([args.number_of_clusters,4096],dtype=np.float64)
-for idx in range(0,args.number_of_clusters):
+initial_cluster_feature_matrix = np.empty([args.number_of_keyframes,4096],dtype=np.float64)
+for idx in range(0,args.number_of_keyframes):
     indices = [i for i, x in enumerate(cluster_initial) if x == idx]
     features = feature_matrix[indices,:]
     initial_cluster_feature_matrix[idx,:] = np.mean(features, axis=0)
 
-kmeans = KMeans(n_clusters=args.number_of_clusters, random_state=0, init=initial_cluster_feature_matrix).fit(feature_matrix)
+kmeans = KMeans(n_clusters=args.number_of_keyframes, random_state=0, init=initial_cluster_feature_matrix).fit(feature_matrix)
 number_of_samples = number_of_images
 keyframe_list = []
 for cluster_center in kmeans.cluster_centers_:
@@ -90,8 +90,9 @@ for cluster_center in kmeans.cluster_centers_:
     keyframe_list.append(file_name)
     img=mpimg.imread(os.path.join(image_directory,file_name))
     plt.figure()
-    imgplot = plt.imshow(img)        
-    copyfile(os.path.join(image_directory,file_name), os.path.join(copy_to_directory,file_name))
+    imgplot = plt.imshow(img)
+    plt.show()
+    copyfile(os.path.join(image_directory,file_name), os.path.join(keyframe_directory,file_name))
     
 elapsed = time.time() - start_time
 print('elapsed',elapsed)

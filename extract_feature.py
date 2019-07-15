@@ -11,14 +11,20 @@ import tensorflow as tf
 
 from utility.str2bool import str2bool
 
+import torch
+
+import pretrainedmodels
+from pretrainedmodels import utils
+
+
 # Flags
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_name", default="20190503")
-parser.add_argument("--image_path", default="/home/yangchihyuan/RobotVideoSummary_Summarization/frames", help="image path")
-parser.add_argument("--feature_path", default="/home/yangchihyuan/RobotVideoSummary_Summarization/features", help="image path")
+parser.add_argument("--data_name", required=True)
+parser.add_argument("--wellposed_image_directory", required=True, help="image path")
+parser.add_argument("--feature_path", required=True, help="path to save extracted features")
 parser.add_argument("--filelist", default="/home/yangchihyuan/RobotVideoSummary_Summarization/filelist.txt", required=False)
-parser.add_argument("--usefilelist", default=False, type=str2bool, required=False, help="if False, all files in the image_path will be used. Otherwise, only files in filelist will be used.")
-parser.add_argument("--model", default="/home/yangchihyuan/RobotVideoSummary_Summarization/CharadesWebcam/frozen_model.pb")
+parser.add_argument("--usefilelist", default=False, type=str2bool, required=False, help="if False, all files in the wellposed_image_directory will be used. Otherwise, only files in filelist will be used.")
+parser.add_argument("--Charades_model", required=True, help="path of the Charades frozen model")
 args = parser.parse_args()
 
 def prepare_im(image_np):
@@ -51,27 +57,38 @@ def recognize_activity(image_np, sess, detection_graph):
 detection_graph = tf.Graph()
 with detection_graph.as_default():
     od_graph_def = tf.GraphDef()
-    with tf.gfile.GFile(args.model, 'rb') as fid:
+    with tf.gfile.GFile(args.Charades_model, 'rb') as fid:
         serialized_graph = fid.read()
         od_graph_def.ParseFromString(serialized_graph)
         tf.import_graph_def(od_graph_def, name='')
 
     sess = tf.Session(graph=detection_graph)
 
+#load torchvision pretrainedmodels
+model_name = 'bninception'
+model = pretrainedmodels.__dict__[model_name](num_classes=1000, pretrained='imagenet')
+model.eval()
+model.last_linear = utils.Identity()    
+tf_img = utils.TransformImage(model)
+load_img = utils.LoadImage()
+
+
 #generate file list
-image_directory = os.path.join(os.path.join(os.path.join(args.image_path, args.data_name+"_classified"),"wellposed"),"original")
-list_basename = [f for f in os.listdir(image_directory) if os.path.isfile(os.path.join(image_directory, f))]
+wellposed_image_directory = args.wellposed_image_directory
+list_basename = [f for f in os.listdir(wellposed_image_directory) if os.path.isfile(os.path.join(wellposed_image_directory, f))]
 list_basename.sort()
 number_of_images = len(list_basename)
 
 #extract feature
 feature_charades_probability = np.empty((number_of_images, 157), dtype=np.float32)
-feature_HSV = np.empty([number_of_images, 4096],dtype=np.float64)
+feature_HSV = np.empty([number_of_images, 4096],dtype=np.float32)
+feature_GoogLeNet = np.empty((number_of_images, 1024), dtype=np.float32)
+
 idx = 0
 file_list_used = []
 for file_name in list_basename:
     print(args.data_name,idx,file_name)
-    input_img = cv2.imread(os.path.join(image_directory, file_name))
+    input_img = cv2.imread(os.path.join(wellposed_image_directory, file_name))
     #extract charades_probability
     probability_array = recognize_activity(input_img, sess, detection_graph)
     feature_charades_probability[idx,:] = probability_array
@@ -85,6 +102,14 @@ for file_name in list_basename:
     hist = cv2.calcHist([hsv], [0, 1, 2], None, number_of_bins, value_range) #hist is a 16x16x16 array
     feature_HSV[idx,:] = np.reshape(hist,(1,4096)) / (height*width)  #normalize the distribution
 
+    #extract GoogLeNet features, using torchvision
+    input_img = load_img(os.path.join(wellposed_image_directory, file_name))
+    input_tensor = tf_img(input_img) 
+    input_tensor = input_tensor.unsqueeze(0)
+    input = torch.autograd.Variable(input_tensor,requires_grad=False)
+    feature = model(input)
+    feature_GoogLeNet[idx,:] = feature.detach().numpy()
+
 
     idx = idx + 1
     file_list_used.append(file_name)
@@ -95,6 +120,7 @@ feature_filename = os.path.join(args.feature_path,args.data_name+".h5")
 f = h5py.File(feature_filename, 'w')
 f.create_dataset('features/charades_probability', data=feature_charades_probability)
 f.create_dataset('features/HSV_histogram', data=feature_HSV)
+f.create_dataset('features/GoogLeNet', data=feature_GoogLeNet)
 f.create_dataset('n_frames', data=idx)
 f.create_dataset('data_name', data=args.data_name)
 #convert Unicode to ascii code

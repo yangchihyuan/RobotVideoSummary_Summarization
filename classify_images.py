@@ -18,11 +18,11 @@ from utility.str2bool import str2bool
 
 # Flags
 parser = argparse.ArgumentParser()
-parser.add_argument("--image_path", default="/home/yangchihyuan/RobotVideoSummary_Summarization/frames/20190503", help="image path")
-parser.add_argument("--output_path", default="/home/yangchihyuan/RobotVideoSummary_Summarization/frames/20190503_classified", help="image path")
+parser.add_argument("--image_directory", required=True", help="image path")
+parser.add_argument("--output_directory", required=True, help="image path")
 parser.add_argument("--model_directory", default="/home/yangchihyuan/openpose/models/", help="OpenPose model directory")
 parser.add_argument("--filelist", default="/home/yangchihyuan/RobotVideoSummary_Summarization/filelist.txt", required=False)
-parser.add_argument("--usefilelist", default=False, type=str2bool, required=False, help="if False, all files in the image_path will be used. Otherwise, only files in filelist will be used.")
+parser.add_argument("--usefilelist", default=False, type=str2bool, required=False, help="if False, all files in the image_directory will be used. Otherwise, only files in filelist will be used.")
 parser.add_argument("--blurred_var_threshold", default=50, required=False)
 parser.add_argument("--distance_center_to_eye_threshold", default=60)
 args = parser.parse_args()
@@ -37,9 +37,9 @@ listOfFiles = list()
 if args.usefilelist and args.filelist is not None:
     with open(args.filelist ,'r') as f:
         content = f.readlines()
-    listOfFiles += [os.path.join(args.image_path, file.strip()) for file in content]
+    listOfFiles += [os.path.join(args.image_directory, file.strip()) for file in content]
 else:
-    for (dirpath, dirnames, filenames) in os.walk(args.image_path):
+    for (dirpath, dirnames, filenames) in os.walk(args.image_directory):
         listOfFiles += [os.path.join(dirpath, file) for file in filenames]
 
 # Starting OpenPose
@@ -48,8 +48,8 @@ opWrapper.configure(params)
 opWrapper.start()
 
 # prepare output directories
-illposed_directory = os.path.join(args.output_path,"illposed")
-wellposed_directory = os.path.join(args.output_path,"wellposed")
+illposed_directory = os.path.join(args.output_directory,"illposed")
+wellposed_directory = os.path.join(args.output_directory,"wellposed")
 
 # Process Image
 datum = op.Datum()

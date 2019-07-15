@@ -16,17 +16,25 @@ import argparse
 
 # Flags
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_name", default="20190503")
-parser.add_argument("--image_path", default="/home/yangchihyuan/RobotVideoSummary_Summarization/frames", help="image path")
-parser.add_argument("--feature_path", default="/home/yangchihyuan/RobotVideoSummary_Summarization/features", help="image path")
-parser.add_argument("--number_of_clusters", default=8)
-parser.add_argument("--copy_to_directory", default="/home/yangchihyuan/RobotVideoSummary_Summarization/keyframes")
+parser.add_argument("--data_name", required=True)
+parser.add_argument("--image_path", required=True)
+parser.add_argument("--feature_path", required=True)
+parser.add_argument("--number_of_keyframes", type=int, required=True)
+parser.add_argument("--keyframe_directory", required=True)
 args = parser.parse_args()
 
-copy_to_directory = os.path.join(os.path.join(args.copy_to_directory,args.data_name), "method4_DPP")
-if not os.path.exists(copy_to_directory):
-    os.makedirs(copy_to_directory)
-save_result_file=os.path.join(copy_to_directory,"result.json")
+keyframe_directory = os.path.join(os.path.join(args.keyframe_directory,args.data_name), "method4_DPP")
+if not os.path.exists(keyframe_directory):
+    os.makedirs(keyframe_directory)
+#remove old files
+for the_file in os.listdir(keyframe_directory):
+    file_path = os.path.join(keyframe_directory, the_file)
+    try:
+        if os.path.isfile(file_path):
+            os.unlink(file_path)
+    except Exception as e:
+        print(e)
+save_result_file=os.path.join(keyframe_directory,"result.json")
 
 #args_do_copy = True
 
@@ -104,22 +112,13 @@ for i in range(0,number_of_images_downsample):
     
 D, V = util.decompose_kernel(distance_matrix)
 #print(D)
-k = 8
+k = args.number_of_keyframes
 Y = k_dpp.k_sample(k, D, V)
 
 elapsed = time.time() - start_time
 print('elapsed',elapsed)
 elapsed = str(datetime.timedelta(seconds=elapsed))
 print("Finished. Total elapsed time (h:m:s): {}".format(elapsed))
-
-#remove old files
-for the_file in os.listdir(copy_to_directory):
-    file_path = os.path.join(copy_to_directory, the_file)
-    try:
-        if os.path.isfile(file_path):
-            os.unlink(file_path)
-    except Exception as e:
-        print(e)
 
 #print(Y)
 keyframe_list = []
@@ -132,7 +131,7 @@ for idx in Y:
     img=mpimg.imread(os.path.join(image_directory,file_name))
     plt.figure()
     imgplot = plt.imshow(img)
-    copyfile(os.path.join(image_directory,file_name), os.path.join(copy_to_directory,file_name))
+    copyfile(os.path.join(image_directory,file_name), os.path.join(keyframe_directory,file_name))
 
 #save the segment result into a json file
 JsonDumpDict = {'keyframe_list':keyframe_list}

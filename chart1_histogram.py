@@ -15,12 +15,9 @@ taipei_timezone = pytz.timezone('Asia/Taipei')
 # Flags
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_name", default="20190503")
-parser.add_argument("--image_path", default="/home/yangchihyuan/RobotVideoSummary_Summarization/frames", help="image path")
 parser.add_argument("--feature_path", default="/home/yangchihyuan/RobotVideoSummary_Summarization/features", help="image path")
-parser.add_argument("--filelist", default="/home/yangchihyuan/RobotVideoSummary_Summarization/filelist.txt", required=False)
-parser.add_argument("--number_of_clusters", default=8)
-parser.add_argument("--copy_to_directory", default="/home/yangchihyuan/RobotVideoSummary_Summarization/keyframes")
-parser.add_argument("--chart_path", default="/home/yangchihyuan/RobotVideoSummary_Summarization/charts")
+parser.add_argument("--keyframe_directory", default="/home/yangchihyuan/RobotVideoSummary_Summarization/keyframes")
+parser.add_argument("--chart_directory", default="/home/yangchihyuan/RobotVideoSummary_Summarization/charts")
 
 args = parser.parse_args()
 
@@ -28,14 +25,14 @@ feature_filename = os.path.join(args.feature_path,args.data_name+".h5")
 
 #prepare save path
 figure_size=(6,4)  #for paper
-figure_name_eps=os.path.join(args.chart_path,args.data_name+".eps")
-figure_name_png=os.path.join(args.chart_path,args.data_name+".png")
-if not os.path.exists(args.chart_path):
-    os.makedirs(args.chart_path)
+figure_name_eps=os.path.join(args.chart_directory,args.data_name+".eps")
+figure_name_png=os.path.join(args.chart_directory,args.data_name+".png")
+if not os.path.exists(args.chart_directory):
+    os.makedirs(args.chart_directory)
 
 
-copy_to_directory = os.path.join(os.path.join(args.copy_to_directory,args.data_name), "method3_time_action")
-save_clusters_file=os.path.join(copy_to_directory,"clusters.json")
+keyframe_directory = os.path.join(os.path.join(args.keyframe_directory,args.data_name), "method3_time_action")
+save_clusters_file=os.path.join(keyframe_directory,"clusters.json")
 
 
 dataset = h5py.File(feature_filename, 'r')
@@ -72,16 +69,22 @@ dict_keyframe_list={}
 dict_keyframe_list["Proposed"] = JsonDumpDict['keyframe_list']
     
 #load selected keyframes from method5' json file
-method5_result_json_file = os.path.join(os.path.join(os.path.join(args.copy_to_directory,args.data_name), "method5_VSUMM"),"result.json")
+method5_result_json_file = os.path.join(os.path.join(os.path.join(args.keyframe_directory,args.data_name), "method5_VSUMM"),"result.json")
 with open(method5_result_json_file, 'r') as outfile:
     JsonDumpDict = json.load(outfile)
 dict_keyframe_list["VSUMM"] = JsonDumpDict['keyframe_list']
 
 #load selected keyframes from method4' json file
-method5_result_json_file = os.path.join(os.path.join(os.path.join(args.copy_to_directory,args.data_name), "method4_DPP"),"result.json")
+method5_result_json_file = os.path.join(os.path.join(os.path.join(args.keyframe_directory,args.data_name), "method4_DPP"),"result.json")
 with open(method5_result_json_file, 'r') as outfile:
     JsonDumpDict = json.load(outfile)
 dict_keyframe_list["DPP"] = JsonDumpDict['keyframe_list']
+
+#load selected keyframes from method4' json file
+method5_result_json_file = os.path.join(os.path.join(os.path.join(args.keyframe_directory,args.data_name), "method6_DSN"),"result.json")
+with open(method5_result_json_file, 'r') as outfile:
+    JsonDumpDict = json.load(outfile)
+dict_keyframe_list["DR-DSN"] = JsonDumpDict['keyframe_list']
 
 
 #I need segment data to select colors, 
@@ -111,8 +114,7 @@ y_max = max(n)
 ratio_list = [0.25, 0.2, 0.15, 0.1, 0.05]
 height_list = [i * y_max for i in ratio_list]
 #print(height_list)
-#legends=['VSUMM','DPP','DR-DSN','Proposed']
-legends=['VSUMM','DPP','Proposed']
+legends=['VSUMM','DPP','DR-DSN','Proposed']
 for method in legends:
     #print(directory)
     #output=subprocess.check_output(["ls", directory+"/*.jpg"])
