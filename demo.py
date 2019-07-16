@@ -3,12 +3,12 @@ from utility.str2bool import str2bool
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--classify_images", default=False, type=str2bool, required=False)
-parser.add_argument("--extract_feature", default=False, type=str2bool, required=False)
-parser.add_argument("--run_method3_proposed", default=False, type=str2bool, required=False)
-parser.add_argument("--run_method4_DPP", default=False, type=str2bool, required=False)
-parser.add_argument("--run_method5_VSUMM", default=False, type=str2bool, required=False)
-parser.add_argument("--run_method6_DSN", default=False, type=str2bool, required=False)
+parser.add_argument("--classify_images", default=True, type=str2bool, required=False)
+parser.add_argument("--extract_feature", default=True, type=str2bool, required=False)
+parser.add_argument("--run_method3_proposed", default=True, type=str2bool, required=False)
+parser.add_argument("--run_method4_DPP", default=True, type=str2bool, required=False)
+parser.add_argument("--run_method5_VSUMM", default=True, type=str2bool, required=False)
+parser.add_argument("--run_method6_DSN", default=True, type=str2bool, required=False)
 parser.add_argument("--generate_chart", default=True, type=str2bool, required=False)
 parser.add_argument("--OpenPose_model_directory", default="/home/yangchihyuan/openpose/models/", help="OpenPose model directory")
 args = parser.parse_args()
@@ -29,7 +29,7 @@ chart_directory = os.path.join(working_directory,"charts")
 if args.classify_images:
     os.system("python3 classify_images.py" + \
         " --image_directory="+ os.path.join(image_path,data_name) + \
-        " --output_directory="+ os.path.join(image_path,data_name+"classified") + \
+        " --output_directory="+ os.path.join(image_path,data_name+"_classified") + \
         " --model_directory="+ args.OpenPose_model_directory )
 
 #extract_features

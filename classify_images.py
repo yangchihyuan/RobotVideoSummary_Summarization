@@ -18,7 +18,7 @@ from utility.str2bool import str2bool
 
 # Flags
 parser = argparse.ArgumentParser()
-parser.add_argument("--image_directory", required=True", help="image path")
+parser.add_argument("--image_directory", required=True, help="image path")
 parser.add_argument("--output_directory", required=True, help="image path")
 parser.add_argument("--model_directory", default="/home/yangchihyuan/openpose/models/", help="OpenPose model directory")
 parser.add_argument("--filelist", default="/home/yangchihyuan/RobotVideoSummary_Summarization/filelist.txt", required=False)
@@ -53,6 +53,7 @@ wellposed_directory = os.path.join(args.output_directory,"wellposed")
 
 # Process Image
 datum = op.Datum()
+index = 0
 for filename in listOfFiles:
     imageToProcess = cv2.imread(filename)
     mask = np.zeros_like(imageToProcess)
@@ -60,7 +61,8 @@ for filename in listOfFiles:
     opWrapper.emplaceAndPop([datum])
 
     basename = os.path.basename(filename)
-    print(basename)
+    index = index + 1
+    print(index, basename)
     if datum.poseKeypoints.size == 1:
         print("no person")
     else:

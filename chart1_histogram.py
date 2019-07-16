@@ -14,10 +14,10 @@ taipei_timezone = pytz.timezone('Asia/Taipei')
 
 # Flags
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_name", default="20190503")
-parser.add_argument("--feature_path", default="/home/yangchihyuan/RobotVideoSummary_Summarization/features", help="image path")
-parser.add_argument("--keyframe_directory", default="/home/yangchihyuan/RobotVideoSummary_Summarization/keyframes")
-parser.add_argument("--chart_directory", default="/home/yangchihyuan/RobotVideoSummary_Summarization/charts")
+parser.add_argument("--data_name", required=True)
+parser.add_argument("--feature_path", required=True, help="image path")
+parser.add_argument("--keyframe_directory", required=True)
+parser.add_argument("--chart_directory", required=True)
 
 args = parser.parse_args()
 
@@ -139,4 +139,5 @@ for method in legends:
 plt.legend(legends)    
 plt.savefig(figure_name_eps,bbox_inches='tight',transparent=True, pad_inches=0)
 plt.savefig(figure_name_png, dpi=72*10,bbox_inches='tight',transparent=True, pad_inches=0)
-plt.show()
+plt.close()
+#plt.show()

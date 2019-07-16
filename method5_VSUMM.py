@@ -44,7 +44,14 @@ if( os.path.exists(keyframe_directory) == False):
     os.mkdir(keyframe_directory)
 else:
     #remove old files
-    os.system("rm " + keyframe_directory +"/*")
+    for the_file in os.listdir(keyframe_directory):
+        file_path = os.path.join(keyframe_directory, the_file)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+        except Exception as e:
+            print(e)
+
 
 #compute the frame-wise distance
 distance_array = []
@@ -60,7 +67,8 @@ plt.xlabel('frame')
 plt.ylabel('distance')
 plt.savefig(figure_name_eps, dpi=72*10,bbox_inches='tight',transparent=True, pad_inches=0)
 plt.savefig(figure_name_png)
-plt.show()
+plt.close()
+#plt.show()
 
 #distance_array.sort()
 #distance_array = distance_array[::-1]
@@ -89,9 +97,9 @@ for cluster_center in kmeans.cluster_centers_:
     file_name = file_list[index]
     keyframe_list.append(file_name)
     img=mpimg.imread(os.path.join(image_directory,file_name))
-    plt.figure()
-    imgplot = plt.imshow(img)
-    plt.show()
+#    plt.figure()
+#    imgplot = plt.imshow(img)
+#    plt.show()
     copyfile(os.path.join(image_directory,file_name), os.path.join(keyframe_directory,file_name))
     
 elapsed = time.time() - start_time

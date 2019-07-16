@@ -56,13 +56,13 @@ def recognize_activity(image_np, sess, detection_graph):
 #load tensorflow
 detection_graph = tf.Graph()
 with detection_graph.as_default():
-    od_graph_def = tf.GraphDef()
-    with tf.gfile.GFile(args.Charades_model, 'rb') as fid:
+    od_graph_def = tf.compat.v1.GraphDef()
+    with tf.io.gfile.GFile(args.Charades_model, 'rb') as fid:
         serialized_graph = fid.read()
         od_graph_def.ParseFromString(serialized_graph)
         tf.import_graph_def(od_graph_def, name='')
 
-    sess = tf.Session(graph=detection_graph)
+    sess = tf.compat.v1.Session(graph=detection_graph)
 
 #load torchvision pretrainedmodels
 model_name = 'bninception'
@@ -117,6 +117,8 @@ sess.close()
 
 
 feature_filename = os.path.join(args.feature_path,args.data_name+".h5")
+if not os.path.exists(args.feature_path):
+    os.makedirs(args.feature_path)
 f = h5py.File(feature_filename, 'w')
 f.create_dataset('features/charades_probability', data=feature_charades_probability)
 f.create_dataset('features/HSV_histogram', data=feature_HSV)
