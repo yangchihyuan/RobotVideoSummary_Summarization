@@ -21,7 +21,7 @@ check the BUILD_PYTHON and DOWNLOAD_BODY_COCO_MODEL in OpenPose's cmake-gui conf
 - Pillow 6.1.0
 - pytz-2019.1
 
-If you want to generate DNS's results, you need to install those additional packages.
+If you want to generate DR-DSN's results, you need to install those additional packages.
 - torch 1.1.0
 - torchvision 0.3.0
 - [pretrainedmodels](https://github.com/Cadene/pretrained-models.pytorch)
